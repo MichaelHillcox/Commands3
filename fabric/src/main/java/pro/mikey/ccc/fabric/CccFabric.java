@@ -1,6 +1,7 @@
 package pro.mikey.ccc.fabric;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandBuildContext;
@@ -23,6 +24,7 @@ public class CccFabric implements ModInitializer {
         var namespace = Commands.literal("ccc");
         Ccc.commands.forEach(command -> namespace.then(command.register()));
 
-        commandSourceStackCommandDispatcher.register(namespace);
+        LiteralCommandNode<CommandSourceStack> cccRegister = commandSourceStackCommandDispatcher.register(namespace);
+        commandSourceStackCommandDispatcher.register(Commands.literal("c").redirect(cccRegister));
     }
 }

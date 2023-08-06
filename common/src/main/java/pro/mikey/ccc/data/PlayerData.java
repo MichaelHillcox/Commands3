@@ -1,49 +1,41 @@
 package pro.mikey.ccc.data;
 
-import com.google.common.base.Preconditions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.saveddata.SavedData;
-import pro.mikey.ccc.struct.Home;
-import pro.mikey.ccc.utils.CompoundUtils;
+import pro.mikey.ccc.struct.Location;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.UUID;
 
 public class PlayerData {
-    private LinkedList<Home> homes = new LinkedList<>();
+    private final LinkedList<Location> homes = new LinkedList<>();
 
     private PlayerData() {
 
     }
 
     public static PlayerData get(ServerPlayer player) {
-        return Store.get(player.server)
-                .playerDataMap
+        return CccStore.get(player.server)
+                .getPlayerDataMap()
                 .computeIfAbsent(player.getUUID(), uuid -> new PlayerData());
     }
 
     public void save(ServerPlayer player) {
-        Store.get(player.server).setDirty();
+        CccStore.get(player.server).setDirty();
     }
 
-    public LinkedList<Home> homes() {
+    public LinkedList<Location> homes() {
         return homes;
     }
 
-    public Optional<Home> getHome(String name) {
+    public Optional<Location> getHome(String name) {
         return homes.stream()
                 .filter(home -> home.name().equalsIgnoreCase(name))
                 .findFirst();
     }
 
-    public void addHome(Home home) {
+    public void addHome(Location home) {
         homes.add(home);
     }
 
@@ -52,7 +44,7 @@ public class PlayerData {
 
         var homes = tag.getList("homes", 10);
         for (var home : homes) {
-            data.homes.add(Home.deserialize((CompoundTag) home));
+            data.homes.add(Location.deserialize((CompoundTag) home));
         }
 
         return data;
@@ -68,47 +60,4 @@ public class PlayerData {
         return tag;
     }
 
-    private static class Store extends SavedData {
-        private HashMap<UUID, PlayerData> playerDataMap = new HashMap<>();
-
-        private static Store INSTANCE;
-
-        public Store() {
-        }
-
-        @Override
-        public CompoundTag save(CompoundTag compoundTag) {
-            compoundTag.put("playerDataMap", CompoundUtils.writeMapToCompound(
-                    playerDataMap,
-                    UUID::toString,
-                    PlayerData::serialize
-            ));
-
-            return compoundTag;
-        }
-
-        public static Store get(MinecraftServer server) {
-            ServerLevel level = server.getLevel(Level.OVERWORLD);
-            Preconditions.checkArgument(level != null, "Overworld is null");
-
-            if (INSTANCE == null) {
-                INSTANCE = level.getDataStorage().computeIfAbsent(Store::deserialize, Store::new, "ccc-player-store");
-            }
-
-            return INSTANCE;
-        }
-
-        public static Store deserialize(CompoundTag tag) {
-            var store = new Store();
-            var playerDataMap = tag.getCompound("playerDataMap");
-            store.playerDataMap.putAll(
-                    CompoundUtils.readMapFromCompound(
-                            playerDataMap,
-                            UUID::fromString,
-                            (compoundTag, key) -> PlayerData.deserialize(compoundTag.getCompound(key))
-                    )
-            );
-            return store;
-        }
-    }
 }

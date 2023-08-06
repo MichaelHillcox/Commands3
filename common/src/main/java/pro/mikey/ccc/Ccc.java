@@ -11,7 +11,8 @@ public class Ccc {
 
     public static void init() {
         commands.addAll(List.of(
-           new HomeCommand()
+            new HomeCommand(),
+            new HomeCommand.GoHomeShortcutCommand()
         ));
     }
 

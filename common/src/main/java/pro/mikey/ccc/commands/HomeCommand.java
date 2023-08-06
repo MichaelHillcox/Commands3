@@ -11,19 +11,16 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import pro.mikey.ccc.data.PlayerData;
-import pro.mikey.ccc.struct.Home;
+import pro.mikey.ccc.struct.Location;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 public class HomeCommand implements Command {
     private static final DynamicCommandExceptionType DIMENSION_MISMATCH = new DynamicCommandExceptionType(obj -> Component.translatable("ccc.commands.response.home.level_missing", obj));
@@ -32,10 +29,7 @@ public class HomeCommand implements Command {
     @Override
     public LiteralArgumentBuilder<CommandSourceStack> register() {
         return Commands.literal("home")
-                .then(Commands.literal("go")
-                        .then(Commands.argument("name", StringArgumentType.greedyString())
-                                .suggests(homeSuggestionProvider())
-                                .executes(ctx -> this.goHome(ctx, StringArgumentType.getString(ctx, "name")))))
+                .then(goHomeCommand("go"))
                 .then(Commands.literal("add")
                         .then(Commands.argument("name", StringArgumentType.greedyString())
                                 .executes(ctx -> this.addHome(ctx, StringArgumentType.getString(ctx, "name")))))
@@ -43,6 +37,7 @@ public class HomeCommand implements Command {
                         .then(Commands.argument("name", StringArgumentType.greedyString())
                                 .suggests(homeSuggestionProvider())
                                 .executes(ctx -> this.removeHome(ctx, StringArgumentType.getString(ctx, "name")))))
+                // TODO: Update
                 .then(Commands.literal("list").executes(this::listHomes))
                 .then(Commands.literal("clear-all").executes(this::clearAllHomes));
     }
@@ -57,18 +52,29 @@ public class HomeCommand implements Command {
         return 0;
     }
 
-    private int goHome(CommandContext<CommandSourceStack> ctx, String name) throws CommandSyntaxException {
+    private static LiteralArgumentBuilder<CommandSourceStack> goHomeCommand(String name) {
+        return Commands.literal(name)
+                .then(Commands.argument("name", StringArgumentType.greedyString())
+                        .suggests(homeSuggestionProvider())
+                        .executes(ctx -> goHome(ctx, StringArgumentType.getString(ctx, "name"))));
+    }
+
+    private static int goHome(CommandContext<CommandSourceStack> ctx, String name) throws CommandSyntaxException {
         var player = ctx.getSource().getPlayerOrException();
         var home = findHome(player, name);
 
-        teleportPlayer(player, home);
+        var result = home.teleportTo(player);
+        if (!result) {
+            throw DIMENSION_MISMATCH.create(home.pos().dimension().location());
+        }
+
         ctx.getSource().sendSuccess(() -> Component.translatable("ccc.commands.feedback.home.teleport", home.name()), false);
         return 0;
     }
 
     private int addHome(CommandContext<CommandSourceStack> ctx, String name) throws CommandSyntaxException {
         var player = ctx.getSource().getPlayerOrException();
-        var newHome = Home.create(name, player);
+        var newHome = Location.create(name, player);
 
         PlayerData playerData = PlayerData.get(player);
         playerData.addHome(newHome);
@@ -83,14 +89,14 @@ public class HomeCommand implements Command {
         var player = ctx.getSource().getPlayerOrException();
 
         PlayerData playerData = PlayerData.get(player);
-        LinkedList<Home> homes = playerData.homes();
+        LinkedList<Location> homes = playerData.homes();
         var home = homes.stream().filter(h -> h.name().equalsIgnoreCase(name.toLowerCase())).findFirst();
         if (home.isEmpty()) {
             ctx.getSource().sendFailure(Component.translatable("ccc.commands.response.home.missing", name));
             return -1;
         }
 
-        Home foundHome = home.get();
+        Location foundHome = home.get();
         homes.remove(foundHome);
         playerData.save(player);
 
@@ -111,7 +117,7 @@ public class HomeCommand implements Command {
         ctx.getSource().sendSuccess(() -> Component.translatable("ccc.generic.homes", homes.size()), false);
 
         // Create a map of dimensions to homes
-        var dimensionMap = new HashMap<ResourceLocation, LinkedList<Home>>();
+        var dimensionMap = new HashMap<ResourceLocation, LinkedList<Location>>();
         homes.forEach(home -> {
             var dimensionHomes = dimensionMap.getOrDefault(home.pos().dimension().location(), new LinkedList<>());
             dimensionHomes.add(home);
@@ -136,7 +142,7 @@ public class HomeCommand implements Command {
         return 0;
     }
 
-    private static Home findHome(ServerPlayer player, String homeName) throws CommandSyntaxException {
+    private static Location findHome(ServerPlayer player, String homeName) throws CommandSyntaxException {
         var home = PlayerData.get(player).getHome(homeName);
         if (home.isEmpty()) {
             throw HOME_MISSING.create(homeName);
@@ -145,35 +151,23 @@ public class HomeCommand implements Command {
         return home.get();
     }
 
-    private static void teleportPlayer(ServerPlayer player, Home home) throws CommandSyntaxException {
-        var vehicle = player.getVehicle();
-
-        if (vehicle != null) {
-            player.stopRiding();
-        }
-
-        GlobalPos pos = home.pos();
-        ServerLevel playerLevel = player.server.getLevel(pos.dimension());
-        if (playerLevel == null) {
-            throw DIMENSION_MISMATCH.create(pos.dimension().location());
-        }
-
-        // Store XP
-        var xp = player.experienceLevel;
-        player.teleportTo(playerLevel, pos.pos().getX() + .5D, pos.pos().getY() + .1D, pos.pos().getZ() + .5D, home.yaw(), home.pitch());
-        player.setExperienceLevels(xp);
-    }
-
     public static SuggestionProvider<CommandSourceStack> homeSuggestionProvider() {
         return (ctx, builder) -> {
             SharedSuggestionProvider.suggest(PlayerData
                     .get(ctx.getSource().getPlayerOrException())
                     .homes()
                     .stream()
-                    .map(Home::name), builder
+                    .map(Location::name), builder
             );
 
             return builder.buildFuture();
         };
+    }
+
+    public static class GoHomeShortcutCommand implements Command {
+        @Override
+        public LiteralArgumentBuilder<CommandSourceStack> register() {
+            return goHomeCommand("gohome");
+        }
     }
 }

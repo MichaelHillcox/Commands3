@@ -1,9 +1,10 @@
 package pro.mikey.ccc.utils;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -24,5 +25,22 @@ public class CompoundUtils {
         }
 
         return map;
+    }
+
+    public static <T> List<T> readListFromCompound(ListTag tag, Function<CompoundTag, T> valueLoader) {
+        List<T> list = new ArrayList<>();
+        for (Tag value : tag) {
+            list.add(valueLoader.apply((CompoundTag) value));
+        }
+        return list;
+    }
+
+    public static <T> ListTag writeListToCompound(Collection<T> list, Function<T, CompoundTag> valueWriter) {
+        var listTag = new ListTag();
+        for (var value : list) {
+            listTag.add(valueWriter.apply(value));
+        }
+
+        return listTag;
     }
 }
