@@ -3,7 +3,7 @@
     "id": "${mod_id}",
     "version": "${mod_version}",
     "name": "${mod_name}",
-    "description": "This is an example description! Tell everyone what your mod is about!",
+    "description": "Commands!",
     "authors": [
         "${mod_author}"
     ],
@@ -11,7 +11,7 @@
         "homepage": "https://fabricmc.net/",
         "sources": "https://github.com/FabricMC/fabric-example-mod"
     },
-    "license": "CC0-1.0",
+    "license": "MPL-2",
     "icon": "assets/modid/icon.png",
     "environment": "*",
     "entrypoints": {
