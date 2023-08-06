@@ -8,8 +8,8 @@
         "${mod_author}"
     ],
     "contact": {
-        "homepage": "https://fabricmc.net/",
-        "sources": "https://github.com/FabricMC/fabric-example-mod"
+        "homepage": "https://github.com/nanite/commands3",
+        "sources": "https://github.com/nanite/commands3"
     },
     "license": "MPL-2",
     "icon": "assets/modid/icon.png",
