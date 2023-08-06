@@ -1,0 +1,38 @@
+plugins {
+    id 'idea'
+    id 'java'
+    id 'fabric-loom'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
+}
+
+sourceSets.main.resources { srcDir 'src/main/generated/resources' }
+
+repositories {
+    maven {
+        name = 'Creeperhost'
+        url = 'https://maven.creeperhost.net/'
+    }
+}
+
+loom {
+    if (project(":common").file("src/main/resources/${mod_id}.accesswidener").exists()) {
+        accessWidenerPath.set(project(":common").file("src/main/resources/${mod_id}.accesswidener"))
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+        }
+    }
+}
+
+//Blame forge? :P
+tasks.register("prepareWorkspace"){}

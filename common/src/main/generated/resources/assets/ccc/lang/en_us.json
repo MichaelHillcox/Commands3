@@ -1,0 +1,12 @@
+{
+  "ccc.commands.feedback.home.added": "Home [%s] added!",
+  "ccc.commands.feedback.home.clear_all": "All homes removed!",
+  "ccc.commands.feedback.home.no_homes": "No homes set!",
+  "ccc.commands.feedback.home.remove": "Home [%s] removed!",
+  "ccc.commands.feedback.home.teleport": "Teleported to home [%s]!",
+  "ccc.commands.feedback.home.update": "Home [%s] updated!",
+  "ccc.commands.response.home.level_missing": "The dimension [%s] of this home seems to no longer exist...",
+  "ccc.commands.response.home.missing": "The home [%s] does not exist...",
+  "ccc.generic.home": "Home",
+  "ccc.generic.homes": "Homes (%s)"
+}

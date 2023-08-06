@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'Neo'
+            url = 'https://maven.neoforged.net/releases'
+        }
+        maven {
+            name = 'Creeperhost'
+            url = 'https://maven.creeperhost.net/'
+        }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.5.0'
+}
+
+rootProject.name = 'CommandsCommandsCommands'
+include("common")
+include("fabric")
+include("neo")
